@@ -67,6 +67,7 @@ pub(crate) fn background(
             bounds,
             background: style
                 .background
+                .clone()
                 .unwrap_or(Background::Color(Color::TRANSPARENT)),
             border_radius: style.border_radius,
             border_width: style.border_width,

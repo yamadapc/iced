@@ -26,7 +26,7 @@ where
                 primitives: vec![
                     Primitive::Quad {
                         bounds,
-                        background: style.background,
+                        background: style.background.clone(),
                         border_color: style.border_color,
                         border_width: style.border_width,
                         border_radius: 0.0,
@@ -78,7 +78,7 @@ where
             if is_selected {
                 primitives.push(Primitive::Quad {
                     bounds,
-                    background: style.selected_background,
+                    background: style.selected_background.clone(),
                     border_color: Color::TRANSPARENT,
                     border_width: 0.0,
                     border_radius: 0.0,

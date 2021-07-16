@@ -3,9 +3,10 @@ use crate::image;
 use crate::svg;
 use crate::triangle;
 use crate::{
-    Background, Font, HorizontalAlignment, Point, Primitive, Rectangle, Size,
-    Vector, VerticalAlignment, Viewport,
+    Background, Font, Gradient, HorizontalAlignment, Point, Primitive,
+    Rectangle, Size, Vector, VerticalAlignment, Viewport,
 };
+use iced_native::LinearGradient;
 
 /// A group of primitives that should be clipped together.
 #[derive(Debug, Clone)]
@@ -15,6 +16,9 @@ pub struct Layer<'a> {
 
     /// The quads of the [`Layer`].
     pub quads: Vec<Quad>,
+
+    /// The gradient quads of the [`Layer`].
+    pub gradient_quads: Vec<GradientQuad>,
 
     /// The triangle meshes of the [`Layer`].
     pub meshes: Vec<Mesh<'a>>,
@@ -32,6 +36,7 @@ impl<'a> Layer<'a> {
         Self {
             bounds,
             quads: Vec::new(),
+            gradient_quads: Vec::new(),
             meshes: Vec::new(),
             text: Vec::new(),
             images: Vec::new(),
@@ -142,19 +147,64 @@ impl<'a> Layer<'a> {
                 let layer = &mut layers[current_layer];
 
                 // TODO: Move some of these computations to the GPU (?)
-                layer.quads.push(Quad {
-                    position: [
-                        bounds.x + translation.x,
-                        bounds.y + translation.y,
-                    ],
-                    size: [bounds.width, bounds.height],
-                    color: match background {
-                        Background::Color(color) => color.into_linear(),
+                match background {
+                    Background::Color(color) => {
+                        layer.quads.push(Quad {
+                            position: [
+                                bounds.x + translation.x,
+                                bounds.y + translation.y,
+                            ],
+                            size: [bounds.width, bounds.height],
+                            color: color.into_linear(),
+                            border_radius: *border_radius,
+                            border_width: *border_width,
+                            border_color: border_color.into_linear(),
+                        });
+                    }
+                    Background::Gradient(gradient) => match gradient {
+                        Gradient::LinearGradient(gradient) => {
+                            if gradient.stops.is_empty() {
+                                return;
+                            }
+
+                            let direction = gradient.direction;
+                            let border_radius = *border_radius;
+
+                            let mut stop_pairs = vec![];
+                            let mut last_stop = gradient.stops[0];
+                            for stop in gradient.stops.iter().skip(1) {
+                                stop_pairs.push((last_stop, stop));
+                                last_stop = *stop;
+                            }
+
+                            for (index, (start_stop, end_stop)) in
+                                stop_pairs.iter().enumerate()
+                            {
+                                let border_radius = if index == 0
+                                    || index == gradient.stops.len() - 1
+                                {
+                                    border_radius
+                                } else {
+                                    0.0
+                                };
+                                let position = [
+                                    bounds.x + translation.x,
+                                    bounds.y + translation.y,
+                                ];
+                                layer.gradient_quads.push(GradientQuad {
+                                    position,
+                                    size: [bounds.width, bounds.height],
+                                    start_color: start_stop.color.into_linear(),
+                                    end_color: end_stop.color.into_linear(),
+                                    direction: 0.0,
+                                    start_percentage: start_stop.percentage,
+                                    stop_percentage: end_stop.percentage,
+                                    border_radius,
+                                })
+                            }
+                        }
                     },
-                    border_radius: *border_radius,
-                    border_width: *border_width,
-                    border_color: border_color.into_linear(),
-                });
+                }
             }
             Primitive::Mesh2D { buffers, size } => {
                 let layer = &mut layers[current_layer];
@@ -261,6 +311,37 @@ pub struct Quad {
     pub border_width: f32,
 }
 
+/// A gradient colored rectangle with a border.
+///
+/// This type can be directly uploaded to GPU memory.
+#[derive(Debug, Clone, Copy)]
+#[repr(C)]
+pub struct GradientQuad {
+    /// The position of the [`GradientQuad`].
+    pub position: [f32; 2],
+
+    /// The size of the [`GradientQuad`].
+    pub size: [f32; 2],
+
+    /// The color of the [`GradientQuad`], in __linear RGB__.
+    pub start_color: [f32; 4],
+
+    /// The color of the [`GradientQuad`], in __linear RGB__.
+    pub end_color: [f32; 4],
+
+    /// The direction of the [`GradientQuad`] fill in radians
+    pub direction: f32,
+
+    /// Where this gradient starts within size
+    pub start_percentage: f32,
+
+    /// Where this gradient ends within size
+    pub stop_percentage: f32,
+
+    /// The border radius of the [`GradientQuad`].
+    pub border_radius: f32,
+}
+
 /// A mesh of triangles.
 #[derive(Debug, Clone, Copy)]
 pub struct Mesh<'a> {
@@ -325,3 +406,9 @@ unsafe impl bytemuck::Zeroable for Quad {}
 
 #[allow(unsafe_code)]
 unsafe impl bytemuck::Pod for Quad {}
+
+#[allow(unsafe_code)]
+unsafe impl bytemuck::Zeroable for GradientQuad {}
+
+#[allow(unsafe_code)]
+unsafe impl bytemuck::Pod for GradientQuad {}

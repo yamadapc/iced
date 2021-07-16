@@ -1,11 +1,14 @@
 use crate::Color;
+use crate::Gradient;
 
 /// The background of some element.
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum Background {
     /// A solid color
     Color(Color),
-    // TODO: Add gradient and image variants
+    /// A gradient of colors
+    Gradient(Gradient),
+    // TODO: Add image variants
 }
 
 impl From<Color> for Background {

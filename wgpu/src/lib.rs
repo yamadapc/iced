@@ -33,6 +33,7 @@ pub mod widget;
 pub mod window;
 
 mod backend;
+mod gradient_quad;
 mod quad;
 mod text;
 

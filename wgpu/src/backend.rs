@@ -1,6 +1,6 @@
-use crate::quad;
 use crate::text;
 use crate::triangle;
+use crate::{gradient_quad, quad};
 use crate::{Settings, Transformation};
 use iced_graphics::backend;
 use iced_graphics::font;
@@ -19,6 +19,7 @@ use crate::image;
 #[derive(Debug)]
 pub struct Backend {
     quad_pipeline: quad::Pipeline,
+    gradient_quad_pipeline: gradient_quad::Pipeline,
     text_pipeline: text::Pipeline,
     triangle_pipeline: triangle::Pipeline,
 
@@ -34,6 +35,8 @@ impl Backend {
         let text_pipeline =
             text::Pipeline::new(device, settings.format, settings.default_font);
         let quad_pipeline = quad::Pipeline::new(device, settings.format);
+        let gradient_quad_pipeline =
+            gradient_quad::Pipeline::new(device, settings.format);
         let triangle_pipeline = triangle::Pipeline::new(
             device,
             settings.format,
@@ -45,6 +48,7 @@ impl Backend {
 
         Self {
             quad_pipeline,
+            gradient_quad_pipeline,
             text_pipeline,
             triangle_pipeline,
 
@@ -118,6 +122,19 @@ impl Backend {
                 staging_belt,
                 encoder,
                 &layer.quads,
+                transformation,
+                scale_factor,
+                bounds,
+                target,
+            );
+        }
+
+        if !layer.gradient_quads.is_empty() {
+            self.gradient_quad_pipeline.draw(
+                device,
+                staging_belt,
+                encoder,
+                &layer.gradient_quads,
                 transformation,
                 scale_factor,
                 bounds,

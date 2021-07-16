@@ -2,7 +2,7 @@
 use iced_core::{Background, Color, Vector};
 
 /// The appearance of a button.
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone)]
 pub struct Style {
     pub shadow_offset: Vector,
     pub background: Option<Background>,
@@ -55,6 +55,7 @@ pub trait StyleSheet {
                     a: color.a * 0.5,
                     ..color
                 }),
+                _ => background,
             }),
             text_color: Color {
                 a: active.text_color.a * 0.5,
