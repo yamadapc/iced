@@ -85,7 +85,8 @@ impl Pipeline {
                             }],
                         },
                         wgpu::VertexBufferLayout {
-                            array_stride: mem::size_of::<layer::Quad>() as u64,
+                            array_stride: mem::size_of::<layer::GradientQuad>()
+                                as u64,
                             step_mode: wgpu::InputStepMode::Instance,
                             attributes: &wgpu::vertex_attr_array!(
                                 1 => Float32x2,
@@ -192,6 +193,7 @@ impl Pipeline {
 
         let mut i = 0;
         let total = instances.len();
+        println!("RENDER PASS - {}", total);
 
         while i < total {
             let end = (i + MAX_INSTANCES).min(total);

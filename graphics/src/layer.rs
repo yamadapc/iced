@@ -1,7 +1,7 @@
 //! Organize rendering primitives into a flattened list of layers.
-use crate::image;
 use crate::svg;
 use crate::triangle;
+use crate::{image, Color};
 use crate::{
     Background, Font, Gradient, HorizontalAlignment, Point, Primitive,
     Rectangle, Size, Vector, VerticalAlignment, Viewport,
@@ -187,19 +187,39 @@ impl<'a> Layer<'a> {
                                 } else {
                                     0.0
                                 };
+                                let range =
+                                    end_stop.percentage - start_stop.percentage;
+                                let offset =
+                                    start_stop.percentage * bounds.width;
                                 let position = [
-                                    bounds.x + translation.x,
+                                    bounds.x + translation.x + offset,
                                     bounds.y + translation.y,
                                 ];
+                                println!("COLOR: {:?} END: {:?} POS: {:?} OFFSET: {:?} RANGE: {:?}", start_stop.color, end_stop.color, position, offset, range);
+                                layer.quads.push(Quad {
+                                    position: [
+                                        bounds.x + translation.x,
+                                        bounds.y + translation.y,
+                                    ],
+                                    size: [bounds.width, bounds.height],
+                                    color: Color::from_rgba(0.0, 1.0, 1.0, 0.3)
+                                        .into_linear(),
+                                    border_radius: 0.0,
+                                    border_width: 2.0,
+                                    border_color: Color::from_rgb(
+                                        1.0, 0.0, 0.0,
+                                    )
+                                    .into_linear(),
+                                });
                                 layer.gradient_quads.push(GradientQuad {
                                     position,
-                                    size: [bounds.width, bounds.height],
+                                    size: [bounds.width * range, bounds.height],
                                     start_color: start_stop.color.into_linear(),
                                     end_color: end_stop.color.into_linear(),
                                     direction: 0.0,
                                     start_percentage: start_stop.percentage,
                                     stop_percentage: end_stop.percentage,
-                                    border_radius,
+                                    border_radius: 0.0,
                                 })
                             }
                         }

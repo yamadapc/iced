@@ -25,6 +25,8 @@ struct VertexOutput {
     [[location(2)]] start_color: vec4<f32>;
     [[location(3)]] end_color: vec4<f32>;
     [[location(4)]] direction: f32;
+    [[location(5)]] start_percentage: f32;
+    [[location(6)]] stop_percentage: f32;
     [[location(7)]] border_radius: f32;
 };
 
@@ -34,9 +36,6 @@ fn vs_main(input: VertexInput) -> VertexOutput {
 
     var pos: vec2<f32> = input.pos * globals.scale;
     var scale: vec2<f32> = input.scale * globals.scale;
-
-    pos = vec2<f32>(pos.x + input.start_percentage * scale.x, pos.y);
-    // scale = vec2<f32>((input.stop_percentage - input.start_percentage) * scale.x, pos.y);
 
     var border_radius: f32 = min(
         input.border_radius,
@@ -57,6 +56,8 @@ fn vs_main(input: VertexInput) -> VertexOutput {
     out.border_radius = border_radius * globals.scale;
     out.direction = input.direction;
     out.position = globals.transform * transform * vec4<f32>(input.v_pos, 0.0, 1.0);
+    out.start_percentage = input.start_percentage;
+    out.stop_percentage = input.stop_percentage;
 
     return out;
 }
@@ -87,24 +88,36 @@ fn distance_alg(
 fn fs_main(
     input: VertexOutput
 ) -> [[location(0)]] vec4<f32> {
-    var frag_coord: vec2<f32> = vec2<f32>(input.position.x, input.position.y);
+    var pixel_position: vec2<f32> = vec2<f32>(input.position.x, input.position.y);
+    var top_left_position: vec2<f32> = vec2<f32>(input.pos.x, input.pos.y);
     var width: f32 = input.scale.x;
-    var x: f32 = frag_coord.x - input.pos.x;
+
+    var x: f32 = pixel_position.x - top_left_position.x;
     var st: f32 = x / width;
-    var mixed_color: vec4<f32> = mix(input.start_color, input.end_color, vec4<f32>(st, st, st, st));
-
-    var dist: f32 = distance_alg(
-        frag_coord,
-        input.pos,
-        input.scale,
-        input.border_radius
+    var mixed_color: vec4<f32> = mix(
+        input.start_color,
+        input.end_color,
+        vec4<f32>(st, st, st, st)
     );
 
-    var radius_alpha: f32 = 1.0 - smoothStep(
-        max(input.border_radius - 0.5, 0.0),
-        input.border_radius + 0.5,
-        dist
-    );
+    // var range_x: f32 = input.stop_percentage - input.start_percentage;
+    // var width_prime: f32 = width * range_x;
+    // var offset: f32 = input.start_percentage * width;
+    // var x_prime: f32 = x;
 
+   var dist: f32 = distance_alg(
+       pixel_position,
+       input.pos,
+       input.scale,
+       input.border_radius
+   );
+
+   var radius_alpha: f32 = 1.0 - smoothStep(
+       max(input.border_radius - 0.5, 0.0),
+       input.border_radius + 0.5,
+       dist
+   );
+
+    // return input.end_color; // mixed_color;
     return vec4<f32>(mixed_color.x, mixed_color.y, mixed_color.z, mixed_color.w * radius_alpha);
 }
