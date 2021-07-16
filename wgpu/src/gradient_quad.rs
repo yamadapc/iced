@@ -150,7 +150,8 @@ impl Pipeline {
 
         let instances = device.create_buffer(&wgpu::BufferDescriptor {
             label: Some("iced_wgpu::gradient_quad instance buffer"),
-            size: mem::size_of::<layer::Quad>() as u64 * MAX_INSTANCES as u64,
+            size: mem::size_of::<layer::GradientQuad>() as u64
+                * MAX_INSTANCES as u64,
             usage: wgpu::BufferUsage::VERTEX | wgpu::BufferUsage::COPY_DST,
             mapped_at_creation: false,
         });
@@ -193,7 +194,6 @@ impl Pipeline {
 
         let mut i = 0;
         let total = instances.len();
-        println!("RENDER PASS - {}", total);
 
         while i < total {
             let end = (i + MAX_INSTANCES).min(total);
