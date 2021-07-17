@@ -177,16 +177,10 @@ impl<'a> Layer<'a> {
                                 last_stop = *stop;
                             }
 
-                            for (index, (start_stop, end_stop)) in
+                            for (_index, (start_stop, end_stop)) in
                                 stop_pairs.iter().enumerate()
                             {
-                                let border_radius = if index == 0
-                                    || index == gradient.stops.len() - 1
-                                {
-                                    border_radius
-                                } else {
-                                    0.0
-                                };
+                                let border_radius = 0.0;
 
                                 /// TODO - This is horrible & it doesn't work as you'd expect
                                 layer.gradient_quads.push(match direction {
@@ -248,6 +242,18 @@ impl<'a> Layer<'a> {
                                     },
                                 })
                             }
+
+                            // layer.quads.push(Quad {
+                            //     position: [
+                            //         bounds.x + translation.x,
+                            //         bounds.y + translation.y,
+                            //     ],
+                            //     size: [bounds.width, bounds.height],
+                            //     color: Color::new(1., 1., 1., 0.).into_linear(),
+                            //     border_color: border_color.into_linear(),
+                            //     border_radius,
+                            //     border_width: *border_width,
+                            // })
                         }
                     },
                 }
