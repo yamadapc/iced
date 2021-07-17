@@ -100,11 +100,6 @@ fn fs_main(
         vec4<f32>(st, st, st, st)
     );
 
-    // var range_x: f32 = input.stop_percentage - input.start_percentage;
-    // var width_prime: f32 = width * range_x;
-    // var offset: f32 = input.start_percentage * width;
-    // var x_prime: f32 = x;
-
    var dist: f32 = distance_alg(
        pixel_position,
        input.pos,
@@ -118,6 +113,5 @@ fn fs_main(
        dist
    );
 
-    // return input.end_color; // mixed_color;
     return vec4<f32>(mixed_color.x, mixed_color.y, mixed_color.z, mixed_color.w * radius_alpha);
 }

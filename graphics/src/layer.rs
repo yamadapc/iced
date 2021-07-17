@@ -195,22 +195,7 @@ impl<'a> Layer<'a> {
                                     bounds.x + translation.x + offset,
                                     bounds.y + translation.y,
                                 ];
-                                println!("COLOR: {:?} END: {:?} POS: {:?} OFFSET: {:?} RANGE: {:?}", start_stop.color, end_stop.color, position, offset, range);
-                                layer.quads.push(Quad {
-                                    position: [
-                                        bounds.x + translation.x,
-                                        bounds.y + translation.y,
-                                    ],
-                                    size: [bounds.width, bounds.height],
-                                    color: Color::from_rgba(0.0, 1.0, 1.0, 0.3)
-                                        .into_linear(),
-                                    border_radius: 0.0,
-                                    border_width: 2.0,
-                                    border_color: Color::from_rgb(
-                                        1.0, 0.0, 0.0,
-                                    )
-                                    .into_linear(),
-                                });
+
                                 layer.gradient_quads.push(GradientQuad {
                                     position,
                                     size: [bounds.width * range, bounds.height],
