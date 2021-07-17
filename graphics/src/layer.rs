@@ -188,6 +188,7 @@ impl<'a> Layer<'a> {
                                 //   Gradient quads will paint on top of quads
                                 // * Calculations here are a bit repetitive and could be done on GPU
                                 // * To keep this code simple I've removed diagonal gradients
+                                // * Does not respect border / border radius
                                 layer.gradient_quads.push(match direction {
                                     Direction::Right => GradientQuad {
                                         position: [
@@ -247,18 +248,6 @@ impl<'a> Layer<'a> {
                                     },
                                 })
                             }
-
-                            // layer.quads.push(Quad {
-                            //     position: [
-                            //         bounds.x + translation.x,
-                            //         bounds.y + translation.y,
-                            //     ],
-                            //     size: [bounds.width, bounds.height],
-                            //     color: Color::new(1., 1., 1., 0.).into_linear(),
-                            //     border_color: border_color.into_linear(),
-                            //     border_radius,
-                            //     border_width: *border_width,
-                            // })
                         }
                     },
                 }
