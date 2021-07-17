@@ -1,12 +1,11 @@
 //! Organize rendering primitives into a flattened list of layers.
+use crate::image;
 use crate::svg;
 use crate::triangle;
-use crate::{image, Color};
 use crate::{
-    Background, Font, Gradient, HorizontalAlignment, Point, Primitive,
-    Rectangle, Size, Vector, VerticalAlignment, Viewport,
+    Background, Direction, Font, Gradient, HorizontalAlignment, Point,
+    Primitive, Rectangle, Size, Vector, VerticalAlignment, Viewport,
 };
-use iced_native::{Direction, LinearGradient};
 
 /// A group of primitives that should be clipped together.
 #[derive(Debug, Clone)]
@@ -168,8 +167,6 @@ impl<'a> Layer<'a> {
                             }
 
                             let direction = gradient.direction;
-                            let border_radius = *border_radius;
-
                             let mut stop_pairs = vec![];
                             let mut last_stop = gradient.stops[0];
                             for stop in gradient.stops.iter().skip(1) {
@@ -182,7 +179,15 @@ impl<'a> Layer<'a> {
                             {
                                 let border_radius = 0.0;
 
-                                /// TODO - This is horrible & it doesn't work as you'd expect
+                                // TODO - This is not great
+                                // It might be a better idea to build gradients into the quad rather
+                                // than a new primitive & do calculations inside of the shader
+                                // rather than the CPU.
+                                // The current issues are related to:
+                                // * Stacking, stacking won't work at all with gradient quads.
+                                //   Gradient quads will paint on top of quads
+                                // * Calculations here are a bit repetitive and could be done on GPU
+                                // * To keep this code simple I've removed diagonal gradients
                                 layer.gradient_quads.push(match direction {
                                     Direction::Right => GradientQuad {
                                         position: [
