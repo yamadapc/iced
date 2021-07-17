@@ -6,7 +6,7 @@ use crate::{
     Background, Font, Gradient, HorizontalAlignment, Point, Primitive,
     Rectangle, Size, Vector, VerticalAlignment, Viewport,
 };
-use iced_native::LinearGradient;
+use iced_native::{Direction, LinearGradient};
 
 /// A group of primitives that should be clipped together.
 #[derive(Debug, Clone)]
@@ -187,24 +187,65 @@ impl<'a> Layer<'a> {
                                 } else {
                                     0.0
                                 };
-                                let range =
-                                    end_stop.percentage - start_stop.percentage;
-                                let offset =
-                                    start_stop.percentage * bounds.width;
-                                let position = [
-                                    bounds.x + translation.x + offset,
-                                    bounds.y + translation.y,
-                                ];
 
-                                layer.gradient_quads.push(GradientQuad {
-                                    position,
-                                    size: [bounds.width * range, bounds.height],
-                                    start_color: start_stop.color.into_linear(),
-                                    end_color: end_stop.color.into_linear(),
-                                    direction: 0.0,
-                                    start_percentage: start_stop.percentage,
-                                    stop_percentage: end_stop.percentage,
-                                    border_radius: 0.0,
+                                /// TODO - This is horrible & it doesn't work as you'd expect
+                                layer.gradient_quads.push(match direction {
+                                    Direction::Right => GradientQuad {
+                                        position: [
+                                            bounds.x
+                                                + translation.x
+                                                + start_stop.percentage
+                                                    * bounds.width,
+                                            bounds.y + translation.y,
+                                        ],
+                                        size: [
+                                            bounds.width
+                                                * (end_stop.percentage
+                                                    - start_stop.percentage),
+                                            bounds.height,
+                                        ],
+                                        top_left_color: start_stop
+                                            .color
+                                            .into_linear(),
+                                        bottom_left_color: start_stop
+                                            .color
+                                            .into_linear(),
+                                        bottom_right_color: end_stop
+                                            .color
+                                            .into_linear(),
+                                        top_right_color: end_stop
+                                            .color
+                                            .into_linear(),
+                                        border_radius,
+                                    },
+                                    Direction::Bottom => GradientQuad {
+                                        position: [
+                                            bounds.x + translation.x,
+                                            bounds.y
+                                                + translation.y
+                                                + start_stop.percentage
+                                                    * bounds.height,
+                                        ],
+                                        size: [
+                                            bounds.width,
+                                            bounds.height
+                                                * (end_stop.percentage
+                                                    - start_stop.percentage),
+                                        ],
+                                        top_left_color: start_stop
+                                            .color
+                                            .into_linear(),
+                                        bottom_left_color: end_stop
+                                            .color
+                                            .into_linear(),
+                                        bottom_right_color: end_stop
+                                            .color
+                                            .into_linear(),
+                                        top_right_color: start_stop
+                                            .color
+                                            .into_linear(),
+                                        border_radius,
+                                    },
                                 })
                             }
                         }
@@ -328,20 +369,17 @@ pub struct GradientQuad {
     /// The size of the [`GradientQuad`].
     pub size: [f32; 2],
 
-    /// The color of the [`GradientQuad`], in __linear RGB__.
-    pub start_color: [f32; 4],
+    /// The top-left color of the [`GradientQuad`], in __linear RGB__.
+    pub top_left_color: [f32; 4],
 
-    /// The color of the [`GradientQuad`], in __linear RGB__.
-    pub end_color: [f32; 4],
+    /// The top-right color of the [`GradientQuad`], in __linear RGB__.
+    pub top_right_color: [f32; 4],
 
-    /// The direction of the [`GradientQuad`] fill in radians
-    pub direction: f32,
+    /// The bottom-left color of the [`GradientQuad`], in __linear RGB__.
+    pub bottom_left_color: [f32; 4],
 
-    /// Where this gradient starts within size
-    pub start_percentage: f32,
-
-    /// Where this gradient ends within size
-    pub stop_percentage: f32,
+    /// The bottom-right color of the [`GradientQuad`], in __linear RGB__.
+    pub bottom_right_color: [f32; 4],
 
     /// The border radius of the [`GradientQuad`].
     pub border_radius: f32,

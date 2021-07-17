@@ -10,24 +10,22 @@ struct VertexInput {
     [[location(0)]] v_pos: vec2<f32>;
     [[location(1)]] pos: vec2<f32>;
     [[location(2)]] scale: vec2<f32>;
-    [[location(3)]] start_color: vec4<f32>;
-    [[location(4)]] end_color: vec4<f32>;
-    [[location(5)]] direction: f32;
-    [[location(6)]] start_percentage: f32;
-    [[location(7)]] stop_percentage: f32;
-    [[location(8)]] border_radius: f32;
+    [[location(3)]] top_left_color: vec4<f32>;
+    [[location(4)]] top_right_color: vec4<f32>;
+    [[location(5)]] bottom_left_color: vec4<f32>;
+    [[location(6)]] bottom_right_color: vec4<f32>;
+    [[location(7)]] border_radius: f32;
 };
 
 struct VertexOutput {
     [[builtin(position)]] position: vec4<f32>;
     [[location(0)]] pos: vec2<f32>;
     [[location(1)]] scale: vec2<f32>;
-    [[location(2)]] start_color: vec4<f32>;
-    [[location(3)]] end_color: vec4<f32>;
-    [[location(4)]] direction: f32;
-    [[location(5)]] start_percentage: f32;
-    [[location(6)]] stop_percentage: f32;
-    [[location(7)]] border_radius: f32;
+    [[location(2)]] top_left_color: vec4<f32>;
+    [[location(3)]] top_right_color: vec4<f32>;
+    [[location(4)]] bottom_left_color: vec4<f32>;
+    [[location(5)]] bottom_right_color: vec4<f32>;
+    [[location(6)]] border_radius: f32;
 };
 
 [[stage(vertex)]]
@@ -49,15 +47,14 @@ fn vs_main(input: VertexInput) -> VertexOutput {
         vec4<f32>(pos - vec2<f32>(0.5, 0.5), 0.0, 1.0)
     );
 
-    out.start_color = input.start_color;
-    out.end_color = input.end_color;
+    out.top_left_color = input.top_left_color;
+    out.top_right_color = input.top_right_color;
+    out.bottom_left_color = input.bottom_left_color;
+    out.bottom_right_color = input.bottom_right_color;
     out.pos = pos;
     out.scale = scale;
     out.border_radius = border_radius * globals.scale;
-    out.direction = input.direction;
     out.position = globals.transform * transform * vec4<f32>(input.v_pos, 0.0, 1.0);
-    out.start_percentage = input.start_percentage;
-    out.stop_percentage = input.stop_percentage;
 
     return out;
 }
@@ -91,13 +88,26 @@ fn fs_main(
     var pixel_position: vec2<f32> = vec2<f32>(input.position.x, input.position.y);
     var top_left_position: vec2<f32> = vec2<f32>(input.pos.x, input.pos.y);
     var width: f32 = input.scale.x;
+    var height: f32 = input.scale.y;
 
     var x: f32 = pixel_position.x - top_left_position.x;
-    var st: f32 = x / width;
+    var y: f32 = pixel_position.y - top_left_position.y;
+
+    var perc_x: f32 = x / width;
+    var perc_y: f32 = y / height;
+
     var mixed_color: vec4<f32> = mix(
-        input.start_color,
-        input.end_color,
-        vec4<f32>(st, st, st, st)
+        mix(
+            input.top_left_color,
+            input.top_right_color,
+            vec4<f32>(perc_x, perc_x, perc_x, perc_x)
+        ),
+        mix(
+            input.bottom_left_color,
+            input.bottom_right_color,
+            vec4<f32>(perc_x, perc_x, perc_x, perc_x)
+        ),
+        vec4<f32>(perc_y, perc_y, perc_y, perc_y)
     );
 
    var dist: f32 = distance_alg(

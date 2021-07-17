@@ -120,6 +120,16 @@ impl Color {
     pub fn inverse(self) -> Color {
         Color::new(1.0f32 - self.r, 1.0f32 - self.g, 1.0f32 - self.b, self.a)
     }
+
+    /// Returns a darkened [`Color`].
+    pub fn darken(self, amount: f32) -> Color {
+        Color::new(
+            self.r * (1. - amount),
+            self.g * (1. - amount),
+            self.b * (1. - amount),
+            self.a,
+        )
+    }
 }
 
 impl From<[f32; 3]> for Color {
