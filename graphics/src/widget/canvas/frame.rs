@@ -87,7 +87,9 @@ impl Frame {
         );
 
         let mut tessellator = FillTessellator::new();
-        let options = FillOptions::default().with_fill_rule(rule.into());
+        let options = FillOptions::default()
+            .with_fill_rule(rule.into())
+            .with_intersections(false);
 
         let result = if self.transforms.current.is_identity {
             tessellator.tessellate_path(path.raw(), &options, &mut buffers)
