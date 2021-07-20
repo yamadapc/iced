@@ -1,9 +1,11 @@
 //! Build interactive programs using The Elm Architecture.
+use std::fmt::Debug;
+
+pub use state::State;
+
 use crate::{Clipboard, Command, Element, Renderer};
 
 mod state;
-
-pub use state::State;
 
 /// The core of a user interface application following The Elm Architecture.
 pub trait Program: Sized {
@@ -11,7 +13,7 @@ pub trait Program: Sized {
     type Renderer: Renderer;
 
     /// The type of __messages__ your [`Program`] will produce.
-    type Message: std::fmt::Debug + Send;
+    type Message: Debug + Send;
 
     /// The type of [`Clipboard`] your [`Program`] will use.
     type Clipboard: Clipboard;

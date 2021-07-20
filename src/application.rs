@@ -1,3 +1,5 @@
+use std::fmt::Debug;
+
 use crate::window;
 use crate::{
     Clipboard, Color, Command, Element, Executor, Settings, Subscription,
@@ -99,7 +101,7 @@ pub trait Application: Sized {
     type Executor: Executor;
 
     /// The type of __messages__ your [`Application`] will produce.
-    type Message: std::fmt::Debug + Send;
+    type Message: Debug + Send;
 
     /// The data needed to initialize your [`Application`].
     type Flags;
