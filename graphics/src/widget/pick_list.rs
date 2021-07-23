@@ -48,7 +48,7 @@ where
 
         let background = Primitive::Quad {
             bounds,
-            background: style.background,
+            background: style.background.clone(),
             border_color: style.border_color,
             border_width: style.border_width,
             border_radius: style.border_radius,
