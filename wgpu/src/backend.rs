@@ -32,8 +32,13 @@ pub struct Backend {
 impl Backend {
     /// Creates a new [`Backend`].
     pub fn new(device: &wgpu::Device, settings: Settings) -> Self {
-        let text_pipeline =
-            text::Pipeline::new(device, settings.format, settings.default_font);
+        let text_pipeline = text::Pipeline::new(
+            device,
+            settings.format,
+            settings.default_font,
+            settings.text_multithreading,
+        );
+
         let quad_pipeline = quad::Pipeline::new(device, settings.format);
         let gradient_quad_pipeline =
             gradient_quad::Pipeline::new(device, settings.format);

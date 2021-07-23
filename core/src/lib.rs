@@ -15,6 +15,7 @@
 #![forbid(unsafe_code)]
 #![forbid(rust_2018_idioms)]
 pub mod keyboard;
+pub mod menu;
 pub mod mouse;
 
 mod align;
@@ -37,6 +38,7 @@ pub use direction::Direction;
 pub use font::Font;
 pub use gradient::{Gradient, GradientStop, LinearGradient};
 pub use length::Length;
+pub use menu::Menu;
 pub use padding::Padding;
 pub use point::Point;
 pub use rectangle::Rectangle;
