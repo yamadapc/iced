@@ -34,7 +34,7 @@ pub trait Renderer: Sized {
     ///
     /// If you are implementing a graphical renderer, your output will most
     /// likely be a tree of visual primitives.
-    type Output;
+    type Output: Default;
 
     /// The default styling attributes of the [`Renderer`].
     ///

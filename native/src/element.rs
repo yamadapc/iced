@@ -1,5 +1,3 @@
-use std::rc::Rc;
-
 use crate::event::{self, Event};
 use crate::layout;
 use crate::overlay;
@@ -19,7 +17,6 @@ use crate::{
 #[allow(missing_debug_implementations)]
 pub struct Element<'a, Message, Renderer> {
     pub(crate) widget: Box<dyn Widget<Message, Renderer> + 'a>,
-    pub(crate) children: Vec<Rc<Element<'a, Message, Renderer>>>,
 }
 
 impl<'a, Message, Renderer> Element<'a, Message, Renderer>
@@ -32,7 +29,6 @@ where
     ) -> Element<'a, Message, Renderer> {
         Element {
             widget: Box::new(widget),
-            children: Vec::new(),
         }
     }
 
@@ -178,7 +174,6 @@ where
     {
         Element {
             widget: Box::new(Map::new(self.widget, f)),
-            children: Vec::new(),
         }
     }
 
@@ -198,7 +193,6 @@ where
     {
         Element {
             widget: Box::new(Explain::new(self, color.into())),
-            children: vec![],
         }
     }
 
