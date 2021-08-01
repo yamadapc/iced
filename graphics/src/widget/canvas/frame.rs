@@ -92,7 +92,7 @@ impl Frame {
             FillVertex(color.into_linear()),
         );
 
-        let mut tessellator = &mut self.fill_tessellator;
+        let tessellator = &mut self.fill_tessellator;
         tessellator.reset();
         let options = FillOptions::default()
             .with_fill_rule(rule.into())
