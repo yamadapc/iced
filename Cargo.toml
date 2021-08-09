@@ -69,7 +69,6 @@ members = [
     "examples/download_progress",
     "examples/events",
     "examples/game_of_life",
-    "examples/gradient_background",
     "examples/geometry",
     "examples/integration",
     "examples/pane_grid",
