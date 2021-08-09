@@ -93,7 +93,6 @@ impl Frame {
         );
 
         let tessellator = &mut self.fill_tessellator;
-        tessellator.reset();
         let options = FillOptions::default()
             .with_fill_rule(rule.into())
             .with_intersections(false);
@@ -138,7 +137,6 @@ impl Frame {
             );
 
         let tessellator = &mut self.fill_tessellator;
-        tessellator.reset();
         let options = FillOptions::default()
             .with_fill_rule(rule.into())
             .with_intersections(false);
