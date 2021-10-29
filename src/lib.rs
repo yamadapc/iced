@@ -248,6 +248,7 @@ pub use settings::Settings;
 pub use runtime::alignment;
 pub use runtime::futures;
 pub use runtime::{
-    Alignment, Background, Color, Command, Font, Gradient, GradientStop,
-    Length, LinearGradient, Point, Rectangle, Size, Subscription, Vector,
+    Alignment, Background, Color, Command, Direction, Font, Gradient,
+    GradientStop, Length, LinearGradient, Point, Rectangle, Size, Subscription,
+    Vector,
 };
