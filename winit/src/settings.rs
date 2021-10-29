@@ -2,8 +2,13 @@
 #[cfg(target_os = "windows")]
 #[path = "settings/windows.rs"]
 mod platform;
-#[cfg(not(target_os = "windows"))]
-#[path = "settings/not_windows.rs"]
+
+#[cfg(target_os = "macos")]
+#[path = "settings/macos.rs"]
+mod platform;
+
+#[cfg(not(any(target_os = "windows", target_os = "macos")))]
+#[path = "settings/other.rs"]
 mod platform;
 
 pub use platform::PlatformSpecific;
@@ -16,6 +21,12 @@ use winit::window::WindowBuilder;
 /// The settings of an application.
 #[derive(Debug, Clone, Default)]
 pub struct Settings<Flags> {
+    /// The identifier of the application.
+    ///
+    /// If provided, this identifier may be used to identify the application or
+    /// communicate with it through the windowing system.
+    pub id: Option<String>,
+
     /// The [`Window`] settings
     pub window: Window,
 
@@ -70,6 +81,7 @@ impl Window {
         title: &str,
         mode: Mode,
         primary_monitor: Option<MonitorHandle>,
+        _id: Option<String>,
     ) -> WindowBuilder {
         let mut window_builder = WindowBuilder::new();
 
@@ -103,6 +115,21 @@ impl Window {
                 .with_max_inner_size(winit::dpi::LogicalSize { width, height });
         }
 
+        #[cfg(any(
+            target_os = "linux",
+            target_os = "dragonfly",
+            target_os = "freebsd",
+            target_os = "netbsd",
+            target_os = "openbsd"
+        ))]
+        {
+            use ::winit::platform::unix::WindowBuilderExtUnix;
+
+            if let Some(id) = _id {
+                window_builder = window_builder.with_app_id(id);
+            }
+        }
+
         #[cfg(target_os = "windows")]
         {
             use winit::platform::windows::WindowBuilderExtWindows;
@@ -110,8 +137,23 @@ impl Window {
             if let Some(parent) = self.platform_specific.parent {
                 window_builder = window_builder.with_parent_window(parent);
             }
+
             window_builder = window_builder
                 .with_drag_and_drop(self.platform_specific.drag_and_drop);
+        }
+
+        #[cfg(target_os = "macos")]
+        {
+            use winit::platform::macos::WindowBuilderExtMacOS;
+
+            window_builder = window_builder
+                .with_title_hidden(self.platform_specific.title_hidden)
+                .with_titlebar_transparent(
+                    self.platform_specific.titlebar_transparent,
+                )
+                .with_fullsize_content_view(
+                    self.platform_specific.fullsize_content_view,
+                );
         }
 
         window_builder = window_builder

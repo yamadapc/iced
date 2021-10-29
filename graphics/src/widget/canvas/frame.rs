@@ -6,6 +6,8 @@ use crate::{
     triangle, Primitive,
 };
 
+use lyon::tessellation;
+
 /// The frame of a [`Canvas`].
 ///
 /// [`Canvas`]: crate::widget::Canvas
@@ -15,8 +17,13 @@ pub struct Frame {
     buffers: lyon::tessellation::VertexBuffers<triangle::Vertex2D, u32>,
     primitives: Vec<Primitive>,
     transforms: Transforms,
+<<<<<<< HEAD
     fill_tessellator: FillTessellator,
     stroke_tessellator: StrokeTessellator,
+=======
+    fill_tessellator: tessellation::FillTessellator,
+    stroke_tessellator: tessellation::StrokeTessellator,
+>>>>>>> upstream/master
 }
 
 #[derive(Debug)]
@@ -48,8 +55,13 @@ impl Frame {
                     is_identity: true,
                 },
             },
+<<<<<<< HEAD
             fill_tessellator: FillTessellator::new(),
             stroke_tessellator: StrokeTessellator::new(),
+=======
+            fill_tessellator: tessellation::FillTessellator::new(),
+            stroke_tessellator: tessellation::StrokeTessellator::new(),
+>>>>>>> upstream/master
         }
     }
 
@@ -85,26 +97,42 @@ impl Frame {
     /// Draws the given [`Path`] on the [`Frame`] by filling it with the
     /// provided style.
     pub fn fill(&mut self, path: &Path, fill: impl Into<Fill>) {
+<<<<<<< HEAD
         use lyon::tessellation::{BuffersBuilder, FillOptions};
 
+=======
+>>>>>>> upstream/master
         let Fill { color, rule } = fill.into();
 
-        let mut buffers = BuffersBuilder::new(
+        let mut buffers = tessellation::BuffersBuilder::new(
             &mut self.buffers,
             FillVertex(color.into_linear()),
         );
 
+<<<<<<< HEAD
         let tessellator = &mut self.fill_tessellator;
         let options = FillOptions::default()
             .with_fill_rule(rule.into())
             .with_intersections(false);
+=======
+        let options =
+            tessellation::FillOptions::default().with_fill_rule(rule.into());
+>>>>>>> upstream/master
 
         let result = if self.transforms.current.is_identity {
-            tessellator.tessellate_path(path.raw(), &options, &mut buffers)
+            self.fill_tessellator.tessellate_path(
+                path.raw(),
+                &options,
+                &mut buffers,
+            )
         } else {
             let path = path.transformed(&self.transforms.current.raw);
 
-            tessellator.tessellate_path(path.raw(), &options, &mut buffers)
+            self.fill_tessellator.tessellate_path(
+                path.raw(),
+                &options,
+                &mut buffers,
+            )
         };
 
         let _ = result.expect("Tessellate path");
@@ -118,12 +146,15 @@ impl Frame {
         size: Size,
         fill: impl Into<Fill>,
     ) {
+<<<<<<< HEAD
         use lyon::path::builder::PathBuilder;
         use lyon::tessellation::{BuffersBuilder, FillOptions};
 
+=======
+>>>>>>> upstream/master
         let Fill { color, rule } = fill.into();
 
-        let mut buffers = BuffersBuilder::new(
+        let mut buffers = tessellation::BuffersBuilder::new(
             &mut self.buffers,
             FillVertex(color.into_linear()),
         );
@@ -138,6 +169,7 @@ impl Frame {
                 lyon::math::Vector::new(size.width, size.height),
             );
 
+<<<<<<< HEAD
         let tessellator = &mut self.fill_tessellator;
         let options = FillOptions::default()
             .with_fill_rule(rule.into())
@@ -151,34 +183,62 @@ impl Frame {
         );
 
         let _ = builder.build().expect("Fill rectangle");
+=======
+        let options =
+            tessellation::FillOptions::default().with_fill_rule(rule.into());
+
+        let _ = self
+            .fill_tessellator
+            .tessellate_rectangle(
+                &lyon::math::Rect::new(top_left, size.into()),
+                &options,
+                &mut buffers,
+            )
+            .expect("Fill rectangle");
+>>>>>>> upstream/master
     }
 
     /// Draws the stroke of the given [`Path`] on the [`Frame`] with the
     /// provided style.
     pub fn stroke(&mut self, path: &Path, stroke: impl Into<Stroke>) {
+<<<<<<< HEAD
         use lyon::tessellation::{BuffersBuilder, StrokeOptions};
 
+=======
+>>>>>>> upstream/master
         let stroke = stroke.into();
 
-        let mut buffers = BuffersBuilder::new(
+        let mut buffers = tessellation::BuffersBuilder::new(
             &mut self.buffers,
             StrokeVertex(stroke.color.into_linear()),
         );
 
+<<<<<<< HEAD
         let tessellator = &mut self.stroke_tessellator;
 
         let mut options = StrokeOptions::default();
+=======
+        let mut options = tessellation::StrokeOptions::default();
+>>>>>>> upstream/master
         options.line_width = stroke.width;
         options.start_cap = stroke.line_cap.into();
         options.end_cap = stroke.line_cap.into();
         options.line_join = stroke.line_join.into();
 
         let result = if self.transforms.current.is_identity {
-            tessellator.tessellate_path(path.raw(), &options, &mut buffers)
+            self.stroke_tessellator.tessellate_path(
+                path.raw(),
+                &options,
+                &mut buffers,
+            )
         } else {
             let path = path.transformed(&self.transforms.current.raw);
 
-            tessellator.tessellate_path(path.raw(), &options, &mut buffers)
+            self.stroke_tessellator.tessellate_path(
+                path.raw(),
+                &options,
+                &mut buffers,
+            )
         };
 
         let _ = result.expect("Stroke path");

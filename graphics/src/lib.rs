@@ -39,7 +39,8 @@ pub use renderer::Renderer;
 pub use transformation::Transformation;
 pub use viewport::Viewport;
 
+pub use iced_native::alignment;
 pub use iced_native::{
-    Background, Color, Direction, Font, Gradient, HorizontalAlignment, Point,
-    Rectangle, Size, Vector, VerticalAlignment,
+    Alignment, Background, Color, Direction, Font, Gradient, Point, Rectangle,
+    Size, Vector,
 };

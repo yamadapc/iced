@@ -3,18 +3,18 @@ mod state;
 
 pub use state::State;
 
+use crate::clipboard::{self, Clipboard};
 use crate::conversion;
 use crate::mouse;
 use crate::{
-    Clipboard, Color, Command, Debug, Error, Executor, Mode, Proxy, Runtime,
-    Settings, Size, Subscription,
+    Color, Command, Debug, Error, Executor, Mode, Proxy, Runtime, Settings,
+    Size, Subscription,
 };
 
 use iced_futures::futures;
 use iced_futures::futures::channel::mpsc;
 use iced_graphics::window;
 use iced_native::program::Program;
-use iced_native::Menu;
 use iced_native::{Cache, UserInterface};
 
 use std::mem::ManuallyDrop;
@@ -30,7 +30,7 @@ use std::mem::ManuallyDrop;
 ///
 /// When using an [`Application`] with the `debug` feature enabled, a debug view
 /// can be toggled by pressing `F12`.
-pub trait Application: Program<Clipboard = Clipboard> {
+pub trait Application: Program {
     /// The data needed to initialize your [`Application`].
     type Flags;
 
@@ -99,13 +99,6 @@ pub trait Application: Program<Clipboard = Clipboard> {
     fn should_exit(&self) -> bool {
         false
     }
-
-    /// Returns the current system [`Menu`] of the [`Application`].
-    ///
-    /// By default, it returns an empty [`Menu`].
-    fn menu(&self) -> Menu<Self::Message> {
-        Menu::new()
-    }
 }
 
 /// Runs an [`Application`] with an executor, compositor, and the provided
@@ -127,6 +120,7 @@ where
     debug.startup_started();
 
     let event_loop = EventLoop::with_user_event();
+    let mut proxy = event_loop.create_proxy();
 
     let mut runtime = {
         let proxy = Proxy::new(event_loop.create_proxy());
@@ -143,19 +137,27 @@ where
 
     let subscription = application.subscription();
 
-    runtime.spawn(init_command);
-    runtime.track(subscription);
-
     let window = settings
         .window
         .into_builder(
             &application.title(),
             application.mode(),
             event_loop.primary_monitor(),
+            settings.id,
         )
-        .with_menu(Some(conversion::menu(&application.menu())))
         .build(&event_loop)
         .map_err(Error::WindowCreationFailed)?;
+
+    let mut clipboard = Clipboard::connect(&window);
+
+    run_command(
+        init_command,
+        &mut runtime,
+        &mut clipboard,
+        &mut proxy,
+        &window,
+    );
+    runtime.track(subscription);
 
     let (compositor, renderer) = C::new(compositor_settings, Some(&window))?;
 
@@ -166,6 +168,8 @@ where
         compositor,
         renderer,
         runtime,
+        clipboard,
+        proxy,
         debug,
         receiver,
         window,
@@ -214,6 +218,8 @@ async fn run_instance<A, E, C>(
     mut compositor: C,
     mut renderer: A::Renderer,
     mut runtime: Runtime<E, Proxy<A::Message>, A::Message>,
+    mut clipboard: Clipboard,
+    mut proxy: winit::event_loop::EventLoopProxy<A::Message>,
     mut debug: Debug,
     mut receiver: mpsc::UnboundedReceiver<winit::event::Event<'_, A::Message>>,
     window: winit::window::Window,
@@ -226,20 +232,18 @@ async fn run_instance<A, E, C>(
     use iced_futures::futures::stream::StreamExt;
     use winit::event;
 
-    let surface = compositor.create_surface(&window);
-    let mut clipboard = Clipboard::connect(&window);
+    let mut surface = compositor.create_surface(&window);
 
     let mut state = State::new(&application, &window);
     let mut viewport_version = state.viewport_version();
-    let mut swap_chain = {
-        let physical_size = state.physical_size();
 
-        compositor.create_swap_chain(
-            &surface,
-            physical_size.width,
-            physical_size.height,
-        )
-    };
+    let physical_size = state.physical_size();
+
+    compositor.configure_surface(
+        &mut surface,
+        physical_size.width,
+        physical_size.height,
+    );
 
     let mut user_interface = ManuallyDrop::new(build_user_interface(
         &mut application,
@@ -289,9 +293,11 @@ async fn run_instance<A, E, C>(
                     update(
                         &mut application,
                         &mut runtime,
-                        &mut debug,
                         &mut clipboard,
+                        &mut proxy,
+                        &mut debug,
                         &mut messages,
+                        &window,
                     );
 
                     // Update window
@@ -357,8 +363,8 @@ async fn run_instance<A, E, C>(
                         .draw(&mut renderer, state.cursor_position());
                     debug.draw_finished();
 
-                    swap_chain = compositor.create_swap_chain(
-                        &surface,
+                    compositor.configure_surface(
+                        &mut surface,
                         physical_size.width,
                         physical_size.height,
                     );
@@ -368,7 +374,7 @@ async fn run_instance<A, E, C>(
 
                 match compositor.draw(
                     &mut renderer,
-                    &mut swap_chain,
+                    &mut surface,
                     state.viewport(),
                     state.background_color(),
                     &primitive,
@@ -392,7 +398,7 @@ async fn run_instance<A, E, C>(
                     }
                     Err(error) => match error {
                         // This is an unrecoverable error.
-                        window::SwapChainError::OutOfMemory => {
+                        window::SurfaceError::OutOfMemory => {
                             panic!("{}", error);
                         }
                         _ => {
@@ -402,16 +408,6 @@ async fn run_instance<A, E, C>(
                             window.request_redraw();
                         }
                     },
-                }
-            }
-            event::Event::WindowEvent {
-                event: event::WindowEvent::MenuEntryActivated(entry_id),
-                ..
-            } => {
-                if let Some(message) =
-                    conversion::menu_message(state.menu(), entry_id)
-                {
-                    messages.push(message);
                 }
             }
             event::Event::WindowEvent {
@@ -491,20 +487,68 @@ pub fn build_user_interface<'a, A: Application>(
 pub fn update<A: Application, E: Executor>(
     application: &mut A,
     runtime: &mut Runtime<E, Proxy<A::Message>, A::Message>,
+    clipboard: &mut Clipboard,
+    proxy: &mut winit::event_loop::EventLoopProxy<A::Message>,
     debug: &mut Debug,
-    clipboard: &mut A::Clipboard,
     messages: &mut Vec<A::Message>,
+    window: &winit::window::Window,
 ) {
     for message in messages.drain(..) {
         debug.log_message(&message);
 
         debug.update_started();
-        let command = runtime.enter(|| application.update(message, clipboard));
+        let command = runtime.enter(|| application.update(message));
         debug.update_finished();
 
-        runtime.spawn(command);
+        run_command(command, runtime, clipboard, proxy, window);
     }
 
     let subscription = application.subscription();
     runtime.track(subscription);
+}
+
+/// Runs the actions of a [`Command`].
+pub fn run_command<Message: 'static + std::fmt::Debug + Send, E: Executor>(
+    command: Command<Message>,
+    runtime: &mut Runtime<E, Proxy<Message>, Message>,
+    clipboard: &mut Clipboard,
+    proxy: &mut winit::event_loop::EventLoopProxy<Message>,
+    window: &winit::window::Window,
+) {
+    use iced_native::command;
+    use iced_native::window;
+
+    for action in command.actions() {
+        match action {
+            command::Action::Future(future) => {
+                runtime.spawn(future);
+            }
+            command::Action::Clipboard(action) => match action {
+                clipboard::Action::Read(tag) => {
+                    let message = tag(clipboard.read());
+
+                    proxy
+                        .send_event(message)
+                        .expect("Send message to event loop");
+                }
+                clipboard::Action::Write(contents) => {
+                    clipboard.write(contents);
+                }
+            },
+            command::Action::Window(action) => match action {
+                window::Action::Resize { width, height } => {
+                    window.set_inner_size(winit::dpi::LogicalSize {
+                        width,
+                        height,
+                    });
+                }
+                window::Action::Move { x, y } => {
+                    window.set_outer_position(winit::dpi::LogicalPosition {
+                        x,
+                        y,
+                    });
+                }
+            },
+        }
+    }
 }

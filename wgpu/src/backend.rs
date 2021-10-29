@@ -2,12 +2,14 @@ use crate::text;
 use crate::triangle;
 use crate::{gradient_quad, quad};
 use crate::{Settings, Transformation};
+
 use iced_graphics::backend;
 use iced_graphics::font;
 use iced_graphics::layer::Layer;
 use iced_graphics::{Primitive, Viewport};
+use iced_native::alignment;
 use iced_native::mouse;
-use iced_native::{Font, HorizontalAlignment, Size, VerticalAlignment};
+use iced_native::{Font, Size};
 
 #[cfg(any(feature = "image_rs", feature = "svg"))]
 use crate::image;
@@ -223,24 +225,24 @@ impl Backend {
                     }],
                     layout: wgpu_glyph::Layout::default()
                         .h_align(match text.horizontal_alignment {
-                            HorizontalAlignment::Left => {
+                            alignment::Horizontal::Left => {
                                 wgpu_glyph::HorizontalAlign::Left
                             }
-                            HorizontalAlignment::Center => {
+                            alignment::Horizontal::Center => {
                                 wgpu_glyph::HorizontalAlign::Center
                             }
-                            HorizontalAlignment::Right => {
+                            alignment::Horizontal::Right => {
                                 wgpu_glyph::HorizontalAlign::Right
                             }
                         })
                         .v_align(match text.vertical_alignment {
-                            VerticalAlignment::Top => {
+                            alignment::Vertical::Top => {
                                 wgpu_glyph::VerticalAlign::Top
                             }
-                            VerticalAlignment::Center => {
+                            alignment::Vertical::Center => {
                                 wgpu_glyph::VerticalAlign::Center
                             }
-                            VerticalAlignment::Bottom => {
+                            alignment::Vertical::Bottom => {
                                 wgpu_glyph::VerticalAlign::Bottom
                             }
                         }),
@@ -290,6 +292,25 @@ impl backend::Text for Backend {
         bounds: Size,
     ) -> (f32, f32) {
         self.text_pipeline.measure(contents, size, font, bounds)
+    }
+
+    fn hit_test(
+        &self,
+        contents: &str,
+        size: f32,
+        font: Font,
+        bounds: Size,
+        point: iced_native::Point,
+        nearest_only: bool,
+    ) -> Option<text::Hit> {
+        self.text_pipeline.hit_test(
+            contents,
+            size,
+            font,
+            bounds,
+            point,
+            nearest_only,
+        )
     }
 }
 

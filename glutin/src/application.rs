@@ -33,6 +33,8 @@ where
     debug.startup_started();
 
     let event_loop = EventLoop::with_user_event();
+    let mut proxy = event_loop.create_proxy();
+
     let mut runtime = {
         let executor = E::new().map_err(Error::ExecutorCreationFailed)?;
         let proxy = Proxy::new(event_loop.create_proxy());
@@ -48,18 +50,13 @@ where
 
     let subscription = application.subscription();
 
-    runtime.spawn(init_command);
-    runtime.track(subscription);
-
     let context = {
-        let builder = settings
-            .window
-            .into_builder(
-                &application.title(),
-                application.mode(),
-                event_loop.primary_monitor(),
-            )
-            .with_menu(Some(conversion::menu(&application.menu())));
+        let builder = settings.window.into_builder(
+            &application.title(),
+            application.mode(),
+            event_loop.primary_monitor(),
+            settings.id,
+        );
 
         let context = ContextBuilder::new()
             .with_vsync(true)
@@ -89,6 +86,17 @@ where
         })?
     };
 
+    let mut clipboard = Clipboard::connect(context.window());
+
+    application::run_command(
+        init_command,
+        &mut runtime,
+        &mut clipboard,
+        &mut proxy,
+        context.window(),
+    );
+    runtime.track(subscription);
+
     let (mut sender, receiver) = mpsc::unbounded();
 
     let mut instance = Box::pin(run_instance::<A, E, C>(
@@ -96,6 +104,8 @@ where
         compositor,
         renderer,
         runtime,
+        clipboard,
+        proxy,
         debug,
         receiver,
         context,
@@ -144,6 +154,8 @@ async fn run_instance<A, E, C>(
     mut compositor: C,
     mut renderer: A::Renderer,
     mut runtime: Runtime<E, Proxy<A::Message>, A::Message>,
+    mut clipboard: Clipboard,
+    mut proxy: glutin::event_loop::EventLoopProxy<A::Message>,
     mut debug: Debug,
     mut receiver: mpsc::UnboundedReceiver<glutin::event::Event<'_, A::Message>>,
     mut context: glutin::ContextWrapper<glutin::PossiblyCurrent, Window>,
@@ -155,8 +167,6 @@ async fn run_instance<A, E, C>(
 {
     use glutin::event;
     use iced_winit::futures::stream::StreamExt;
-
-    let mut clipboard = Clipboard::connect(context.window());
 
     let mut state = application::State::new(&application, context.window());
     let mut viewport_version = state.viewport_version();
@@ -209,9 +219,11 @@ async fn run_instance<A, E, C>(
                     application::update(
                         &mut application,
                         &mut runtime,
-                        &mut debug,
                         &mut clipboard,
+                        &mut proxy,
+                        &mut debug,
                         &mut messages,
+                        context.window(),
                     );
 
                     // Update window
@@ -315,16 +327,6 @@ async fn run_instance<A, E, C>(
 
                 // TODO: Handle animations!
                 // Maybe we can use `ControlFlow::WaitUntil` for this.
-            }
-            event::Event::WindowEvent {
-                event: event::WindowEvent::MenuEntryActivated(entry_id),
-                ..
-            } => {
-                if let Some(message) =
-                    conversion::menu_message(state.menu(), entry_id)
-                {
-                    messages.push(message);
-                }
             }
             event::Event::WindowEvent {
                 event: window_event,

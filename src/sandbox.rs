@@ -1,6 +1,5 @@
 use crate::{
-    Application, Clipboard, Color, Command, Element, Error, Settings,
-    Subscription,
+    Application, Color, Command, Element, Error, Settings, Subscription,
 };
 
 /// A sandboxed [`Application`].
@@ -88,7 +87,7 @@ use crate::{
 /// ```
 pub trait Sandbox {
     /// The type of __messages__ your [`Sandbox`] will produce.
-    type Message: std::fmt::Debug + Clone + Send;
+    type Message: std::fmt::Debug + Send;
 
     /// Initializes the [`Sandbox`].
     ///
@@ -162,11 +161,7 @@ where
         T::title(self)
     }
 
-    fn update(
-        &mut self,
-        message: T::Message,
-        _clipboard: &mut Clipboard,
-    ) -> Command<T::Message> {
+    fn update(&mut self, message: T::Message) -> Command<T::Message> {
         T::update(self, message);
 
         Command::none()

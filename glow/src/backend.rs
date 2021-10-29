@@ -2,12 +2,14 @@ use crate::quad;
 use crate::text;
 use crate::triangle;
 use crate::{Settings, Transformation, Viewport};
+
 use iced_graphics::backend;
 use iced_graphics::font;
 use iced_graphics::Layer;
 use iced_graphics::Primitive;
+use iced_native::alignment;
 use iced_native::mouse;
-use iced_native::{Font, HorizontalAlignment, Size, VerticalAlignment};
+use iced_native::{Font, Size};
 
 /// A [`glow`] graphics backend for [`iced`].
 ///
@@ -146,24 +148,24 @@ impl Backend {
                     }],
                     layout: glow_glyph::Layout::default()
                         .h_align(match text.horizontal_alignment {
-                            HorizontalAlignment::Left => {
+                            alignment::Horizontal::Left => {
                                 glow_glyph::HorizontalAlign::Left
                             }
-                            HorizontalAlignment::Center => {
+                            alignment::Horizontal::Center => {
                                 glow_glyph::HorizontalAlign::Center
                             }
-                            HorizontalAlignment::Right => {
+                            alignment::Horizontal::Right => {
                                 glow_glyph::HorizontalAlign::Right
                             }
                         })
                         .v_align(match text.vertical_alignment {
-                            VerticalAlignment::Top => {
+                            alignment::Vertical::Top => {
                                 glow_glyph::VerticalAlign::Top
                             }
-                            VerticalAlignment::Center => {
+                            alignment::Vertical::Center => {
                                 glow_glyph::VerticalAlign::Center
                             }
-                            VerticalAlignment::Bottom => {
+                            alignment::Vertical::Bottom => {
                                 glow_glyph::VerticalAlign::Bottom
                             }
                         }),
@@ -210,6 +212,25 @@ impl backend::Text for Backend {
         bounds: Size,
     ) -> (f32, f32) {
         self.text_pipeline.measure(contents, size, font, bounds)
+    }
+
+    fn hit_test(
+        &self,
+        contents: &str,
+        size: f32,
+        font: Font,
+        bounds: Size,
+        point: iced_native::Point,
+        nearest_only: bool,
+    ) -> Option<text::Hit> {
+        self.text_pipeline.hit_test(
+            contents,
+            size,
+            font,
+            bounds,
+            point,
+            nearest_only,
+        )
     }
 }
 
