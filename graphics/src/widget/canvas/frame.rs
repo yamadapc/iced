@@ -1,5 +1,4 @@
 use iced_native::{Point, Rectangle, Size, Vector};
-use lyon::tessellation::{FillTessellator, StrokeTessellator};
 
 use crate::{
     canvas::{Fill, Geometry, Path, Stroke, Text},
